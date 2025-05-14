@@ -8,46 +8,47 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var username: String = ""
-    @State private var isLoggedIn: Bool = false
+@State var name = ""
+@State var logged = false
 
-    var body: some View {
-        if isLoggedIn {
-            CourseListView() // ✅ 正确跳转页面（CourseListView.swift 中定义）
-        } else {
-            VStack(spacing: 20) {
-                Text("Welcome to FitBook")
-                    .font(.largeTitle)
-                    .bold()
+var body: some View {
+if logged {
+    CourseListView(logged: $logged)
+} else {
+    VStack(spacing: 20){
+        Text("FitBook")
+            .font(.largeTitle)
 
-                TextField("Enter your name", text: $username)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .padding(.horizontal)
+        TextField("Your name", text: $name)
+            .textFieldStyle(RoundedBorderTextFieldStyle())
+            .padding(.horizontal)
 
-                Button("Login") {
-                    if !username.trimmingCharacters(in: .whitespaces).isEmpty {
-                        UserDefaults.standard.set(username, forKey: "currentUser")
-                        isLoggedIn = true
-                    }
-                }
-                .padding()
-                .frame(maxWidth: .infinity)
-                .background(Color.blue)
-                .foregroundColor(.white)
-                .cornerRadius(10)
-                .padding(.horizontal)
+        Button("Login") {
+            if name != "" {
+                UserDefaults.standard.set(name, forKey: "user")
+                logged = true
             }
-            .onAppear {
-                if let savedUser = UserDefaults.standard.string(forKey: "currentUser") {
-                    username = savedUser
-                    isLoggedIn = true
-                }
-            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding()
+        .background(Color.blue)
+        .foregroundColor(.white)
+        .cornerRadius(10)
+        .padding(.horizontal)
+    }
+    .onAppear {
+        UserDefaults.standard.removeObject(forKey: "user")
+        if let n = UserDefaults.standard.string(forKey: "user") {
+            name = n
+            logged = true
         }
     }
 }
+}
+}
 
 #Preview {
-    ContentView()
+ContentView()
 }
+
 

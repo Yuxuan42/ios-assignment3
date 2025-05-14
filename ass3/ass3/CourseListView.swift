@@ -7,105 +7,137 @@
 
 import SwiftUI
 
-// 数据模型：课程
 struct Course: Codable, Identifiable {
-    let id: Int
-    let name: String
-    let time: String
-    var capacity: Int
-    var enrolledUsers: [String]
+    var id: Int
+    var name: String
+    var time: String
+    var left: Int
+    var users: [String]
 }
 
-// 课程管理 ViewModel
-class CourseViewModel: ObservableObject {
-    @Published var courses: [Course] = []
-    private let userKey = "currentUser"
-    private let courseKey = "courses"
+class CourseVM: ObservableObject {
+    @Published var list: [Course] = []
+    let ukey = "user"
+    let ckey = "course_data"
 
     init() {
-        loadCourses()
-    }
-
-    func loadCourses() {
-        if let data = UserDefaults.standard.data(forKey: courseKey),
-           let decoded = try? JSONDecoder().decode([Course].self, from: data) {
-            self.courses = decoded
+        if let d = UserDefaults.standard.data(forKey: ckey),
+           let decoded = try? JSONDecoder().decode([Course].self, from: d) {
+            list = decoded
         } else {
-            // 如果没有数据，初始化默认课程
-            self.courses = [
-                Course(id: 1, name: "Morning Yoga", time: "Mon 8:00 AM", capacity: 10, enrolledUsers: []),
-                Course(id: 2, name: "HIIT Blast", time: "Wed 6:30 PM", capacity: 8, enrolledUsers: []),
-                Course(id: 3, name: "Evening Stretch", time: "Fri 7:00 PM", capacity: 12, enrolledUsers: [])
+            list = [
+                Course(id: 1, name: "Yoga", time: "Mon 8am", left: 10, users: []),
+                Course(id: 2, name: "HIIT", time: "Wed 6:30pm", left: 8, users: []),
+                Course(id: 3, name: "Stretch", time: "Fri 7pm", left: 12, users: []),
+                Course(id: 4, name: "Zumba", time: "Sun 5pm", left: 15, users: [])
             ]
-            saveCourses()
+            save()
         }
     }
 
-    func saveCourses() {
-        if let encoded = try? JSONEncoder().encode(courses) {
-            UserDefaults.standard.set(encoded, forKey: courseKey)
+    func getUser() -> String {
+        UserDefaults.standard.string(forKey: ukey) ?? ""
+    }
+
+    func save() {
+        if let d = try? JSONEncoder().encode(list) {
+            UserDefaults.standard.set(d, forKey: ckey)
         }
     }
 
-    func currentUser() -> String {
-        UserDefaults.standard.string(forKey: userKey) ?? "Guest"
+    func has(_ c: Course) -> Bool {
+        c.users.contains(getUser())
     }
 
-    func hasBooked(_ course: Course) -> Bool {
-        course.enrolledUsers.contains(currentUser())
+    func book(_ c: Course) {
+        if let i = list.firstIndex(where: { $0.id == c.id }),
+           !has(list[i]), list[i].left > 0 {
+            list[i].users.append(getUser())
+            list[i].left -= 1
+            save()
+        }
     }
 
-    func book(_ course: Course) {
-        guard let index = courses.firstIndex(where: { $0.id == course.id }),
-              !hasBooked(courses[index]),
-              courses[index].capacity > 0 else { return }
-
-        courses[index].enrolledUsers.append(currentUser())
-        courses[index].capacity -= 1
-        saveCourses()
+    func cancel(_ c: Course) {
+        if let i = list.firstIndex(where: { $0.id == c.id }),
+           let u = list[i].users.firstIndex(of: getUser()) {
+            list[i].users.remove(at: u)
+            list[i].left += 1
+            save()
+        }
     }
 }
 
-// 页面视图
 struct CourseListView: View {
-    @StateObject private var viewModel = CourseViewModel()
+    @Binding var logged: Bool
+    @State var showBookings = false
+    @StateObject var vm = CourseVM()
 
     var body: some View {
-        NavigationView {
-            List {
-                ForEach(viewModel.courses) { course in
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(course.name)
-                            .font(.headline)
-                        Text(course.time)
-                            .foregroundColor(.secondary)
-                        Text("Remaining spots: \(course.capacity)")
+        if showBookings {
+            MyBookingsView(logged: $logged)
+        } else {
+            VStack {
+                Text("Available Classes")
+                    .font(.title)
+                    .bold()
+                    .padding(.top)
 
-                        if viewModel.hasBooked(course) {
-                            Text("✅ You have booked this class")
-                                .foregroundColor(.green)
-                                .font(.subheadline)
-                        } else {
-                            Button("Book") {
-                                viewModel.book(course)
+                List {
+                    ForEach(vm.list) { c in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(c.name).font(.headline)
+                            Text(c.time).foregroundColor(.gray)
+                            Text("Left: \(c.left)")
+
+                            if vm.has(c) {
+                                Button("Cancel") {
+                                    vm.cancel(c)
+                                }.foregroundColor(.red)
+                            } else {
+                                Button("Book") {
+                                    vm.book(c)
+                                }
+                                .disabled(c.left == 0)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(c.left == 0 ? Color.gray : Color.blue)
+                                .cornerRadius(6)
                             }
-                            .disabled(course.capacity == 0)
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(course.capacity == 0 ? Color.gray : Color.blue)
-                            .cornerRadius(8)
                         }
+                        .padding(.vertical, 6)
                     }
-                    .padding(.vertical, 8)
                 }
+
+                HStack {
+                    Button("My Bookings") {
+                        showBookings = true
+                    }
+                    .padding(10)
+                    .background(Color.green)
+                    .foregroundColor(.white)
+                    .cornerRadius(6)
+
+                    Button("Back") {
+                        logged = false
+                    }
+                    .padding(10)
+                    .background(Color.gray)
+                    .foregroundColor(.white)
+                    .cornerRadius(6)
+                }
+                .padding(.bottom, 10)
             }
-            .navigationTitle("Available Classes")
         }
     }
 }
 
 #Preview {
-    CourseListView()
+    CourseListView(logged: .constant(true))
 }
+
+
+
+
 
