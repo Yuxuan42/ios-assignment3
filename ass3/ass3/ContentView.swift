@@ -13,7 +13,7 @@ struct ContentView: View {
 
     var body: some View {
         if isLoggedIn {
-            CourseListView()
+            CourseListView() // ✅ 正确跳转页面（CourseListView.swift 中定义）
         } else {
             VStack(spacing: 20) {
                 Text("Welcome to FitBook")
@@ -45,5 +45,9 @@ struct ContentView: View {
             }
         }
     }
+}
+
+#Preview {
+    ContentView()
 }
 
