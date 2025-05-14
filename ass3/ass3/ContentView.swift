@@ -8,17 +8,42 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var username: String = ""
+    @State private var isLoggedIn: Bool = false
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        if isLoggedIn {
+            CourseListView()
+        } else {
+            VStack(spacing: 20) {
+                Text("Welcome to FitBook")
+                    .font(.largeTitle)
+                    .bold()
+
+                TextField("Enter your name", text: $username)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(.horizontal)
+
+                Button("Login") {
+                    if !username.trimmingCharacters(in: .whitespaces).isEmpty {
+                        UserDefaults.standard.set(username, forKey: "currentUser")
+                        isLoggedIn = true
+                    }
+                }
+                .padding()
+                .frame(maxWidth: .infinity)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(10)
+                .padding(.horizontal)
+            }
+            .onAppear {
+                if let savedUser = UserDefaults.standard.string(forKey: "currentUser") {
+                    username = savedUser
+                    isLoggedIn = true
+                }
+            }
         }
-        .padding()
     }
 }
 
-#Preview {
-    ContentView()
-}
