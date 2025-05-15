@@ -12,7 +12,7 @@ struct Course: Codable, Identifiable {
     var name: String
     var time: String
     var left: Int
-    var users: [String]
+    var users: [String]  // booked users
 }
 
 class CourseVM: ObservableObject {
@@ -22,8 +22,8 @@ class CourseVM: ObservableObject {
 
     init() {
         if let d = UserDefaults.standard.data(forKey: ckey),
-           let decoded = try? JSONDecoder().decode([Course].self, from: d) {
-            list = decoded
+           let got = try? JSONDecoder().decode([Course].self, from: d) {
+            list = got
         } else {
             list = [
                 Course(id: 1, name: "Yoga", time: "Mon 8am", left: 10, users: []),
@@ -31,11 +31,11 @@ class CourseVM: ObservableObject {
                 Course(id: 3, name: "Stretch", time: "Fri 7pm", left: 12, users: []),
                 Course(id: 4, name: "Zumba", time: "Sun 5pm", left: 15, users: [])
             ]
-            save()
+            save()  // 首次存
         }
     }
 
-    func getUser() -> String {
+    func who() -> String {
         UserDefaults.standard.string(forKey: ukey) ?? ""
     }
 
@@ -46,22 +46,23 @@ class CourseVM: ObservableObject {
     }
 
     func has(_ c: Course) -> Bool {
-        c.users.contains(getUser())
+        c.users.contains(who())  // who
     }
 
     func book(_ c: Course) {
-        if let i = list.firstIndex(where: { $0.id == c.id }),
-           !has(list[i]), list[i].left > 0 {
-            list[i].users.append(getUser())
-            list[i].left -= 1
-            save()
+        if let i = list.firstIndex(where: { $0.id == c.id }) {
+            if !has(list[i]) && list[i].left > 0 {
+                list[i].users.append(who())
+                list[i].left -= 1
+                save()
+            }
         }
     }
 
     func cancel(_ c: Course) {
         if let i = list.firstIndex(where: { $0.id == c.id }),
-           let u = list[i].users.firstIndex(of: getUser()) {
-            list[i].users.remove(at: u)
+           let j = list[i].users.firstIndex(of: who()) {
+            list[i].users.remove(at: j)
             list[i].left += 1
             save()
         }
@@ -70,61 +71,68 @@ class CourseVM: ObservableObject {
 
 struct CourseListView: View {
     @Binding var logged: Bool
-    @State var showBookings = false
+    @State var showB = false
     @StateObject var vm = CourseVM()
+    @State var detail: Course? = nil
 
     var body: some View {
-        if showBookings {
-            MyBookingsView(logged: $logged)
+        if showB {
+            MyBookingsView(logged: $logged)  // 看bookinglist
+        } else if let d = detail {
+
+            CourseDetailView(course: d, goBack: Binding(get: { false }, set: { _ in detail = nil }))
         } else {
             VStack {
-                Text("Available Classes")
-                    .font(.title)
-                    .bold()
-                    .padding(.top)
+                Text("Courses")
+                    .font(.title).bold().padding(.top)
 
                 List {
                     ForEach(vm.list) { c in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(c.name).font(.headline)
-                            Text(c.time).foregroundColor(.gray)
-                            Text("Left: \(c.left)")
+                        Button {
+                            detail = c  // go detail
+                        } label: {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(c.name).font(.headline)
+                                Text(c.time).foregroundColor(.gray)
+                                Text("Left: \(c.left)")
 
-                            if vm.has(c) {
-                                Button("Cancel") {
-                                    vm.cancel(c)
-                                }.foregroundColor(.red)
-                            } else {
-                                Button("Book") {
-                                    vm.book(c)
+                                if vm.has(c) {
+                                    Button("Cancel") {
+                                        vm.cancel(c)
+                                    }
+                                    .foregroundColor(.red)
+                                } else {
+                                    Button("Book") {
+                                        vm.book(c)
+                                    }
+                                    .disabled(c.left == 0)
+                                    .padding(.horizontal,10)
+                                    .padding(.vertical,5)
+                                    .background(c.left == 0 ? Color.gray : Color.blue)
+                                    .cornerRadius(6)
+                                    .foregroundStyle(.white)
                                 }
-                                .disabled(c.left == 0)
-                                .foregroundColor(.white)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
-                                .background(c.left == 0 ? Color.gray : Color.blue)
-                                .cornerRadius(6)
-                            }
+                            }.padding(.vertical,6)
                         }
-                        .padding(.vertical, 6)
+                        .buttonStyle(PlainButtonStyle())  
                     }
                 }
 
                 HStack {
                     Button("My Bookings") {
-                        showBookings = true
+                        showB = true
                     }
-                    .padding(10)
+                    .padding(8)
                     .background(Color.green)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .cornerRadius(6)
 
                     Button("Back") {
-                        logged = false
+                        logged = false  // 回到登录页
                     }
-                    .padding(10)
+                    .padding(8)
                     .background(Color.gray)
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .cornerRadius(6)
                 }
                 .padding(.bottom, 10)
@@ -133,9 +141,6 @@ struct CourseListView: View {
     }
 }
 
-#Preview {
-    CourseListView(logged: .constant(true))
-}
 
 
 

@@ -9,34 +9,38 @@ import SwiftUI
 
 struct MyBookingsView: View {
     @Binding var logged: Bool
-    @StateObject var vm = CourseVM()
+    @StateObject var vm = CourseVM()  // viewmodel 持久化数据
+    @State var back = false  // 控制返回课程页
 
     var body: some View {
-        VStack {
-            Text("My Bookings")
-                .font(.title)
-                .bold()
-                .padding(.top)
+        if back {
+            CourseListView(logged: $logged)  // 返回课程页
+        } else {
+            VStack {
+                Text("My Bookings")
+                    .font(.title).bold()
+                    .padding(.top)
 
-            List {
-                ForEach(vm.list.filter { vm.has($0) }) { c in
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(c.name).font(.headline)
-                        Text(c.time).foregroundColor(.gray)
-
-                        Button("Cancel") {
-                            vm.cancel(c)
+                List {
+                    ForEach(vm.list.filter { vm.has($0) }) { c in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(c.name).font(.headline)
+                            Text(c.time).foregroundColor(.gray)
+                            Text("Booked")
+                            Button("Cancel") {
+                                vm.cancel(c)
+                            }
+                            .foregroundColor(.red)
                         }
-                        .foregroundColor(.red)
+                        .padding(.vertical, 6)
                     }
-                    .padding(.vertical, 6)
                 }
-            }
 
-            Button("Back") {
-                logged = true // 或者回课程页（你想怎么跳我来配）
+                Button("Back") {
+                    back = true
+                }
+                .padding(.bottom, 10)
             }
-            .padding(.bottom, 10)
         }
     }
 }
@@ -44,3 +48,5 @@ struct MyBookingsView: View {
 #Preview {
     MyBookingsView(logged: .constant(true))
 }
+
+
