@@ -25,7 +25,7 @@ struct ContentView: View {
 
                 Button("Login") {
                     if name != "" {
-                        UserDefaults.standard.set(name, forKey: "user") // save
+                        UserDefaults.standard.set(name, forKey: "user") // 存
                         logged = true
                     }
                 }
@@ -37,7 +37,7 @@ struct ContentView: View {
                 .padding(.horizontal)
             }
             .onAppear {
-                // check if someone already logged in
+                UserDefaults.standard.removeObject(forKey: "user")
                 if let n = UserDefaults.standard.string(forKey: "user") {
                     name = n
                     logged = true
