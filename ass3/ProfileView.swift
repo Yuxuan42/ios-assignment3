@@ -37,10 +37,16 @@ struct ProfileView: View {
                 if !error.isEmpty {
                     Text(error).foregroundColor(.red)
                 }
-                Button(isLoading ? "Logging in..." : "Login") {
+                Button(action: {
                     error = ""
                     isLoading = true
                     login(phone: phone, passcode: passcode)
+                }) {
+                    HStack {
+                        Spacer()
+                        Text(isLoading ? "Logging in..." : "Login")
+                        Spacer()
+                    }
                 }
                 .disabled(isLoading)
                 .frame(maxWidth: .infinity)

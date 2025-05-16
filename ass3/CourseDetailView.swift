@@ -9,9 +9,12 @@ import SwiftUI
 
 struct CourseDetailView: View {
     var course: Course
-    @Binding var goBack: Bool
     @StateObject var vm = CourseVM()
     @AppStorage("userPhone") var userPhone: String = ""
+    @Environment(\.dismiss) var dismiss
+
+    @State private var showSuccess = false
+    @State private var successMessage = ""
 
     var body: some View {
         VStack(spacing: 20) {
@@ -30,14 +33,18 @@ struct CourseDetailView: View {
                     .foregroundColor(.red)
             } else if vm.has(course, userId: userPhone) {
                 Button("Cancel Booking") {
-                    vm.cancel(course, userId: userPhone)
-                    goBack = true
+                    vm.cancel(course, userId: userPhone) {
+                        successMessage = "Booking cancelled."
+                        showSuccess = true
+                    }
                 }
                 .foregroundColor(.red)
             } else {
                 Button("Book") {
-                    vm.book(course, userId: userPhone)
-                    goBack = true
+                    vm.book(course, userId: userPhone) {
+                        successMessage = "Booking successful!"
+                        showSuccess = true
+                    }
                 }
                 .disabled(course.left == 0)
                 .foregroundColor(.white)
@@ -47,17 +54,25 @@ struct CourseDetailView: View {
             }
 
             Button("Back") {
-                goBack = true
+                dismiss()
             }
             .padding(.top, 10)
         }
         .padding()
+        .alert(isPresented: $showSuccess) {
+            Alert(
+                title: Text("Success"),
+                message: Text(successMessage),
+                dismissButton: .default(Text("OK")) {
+                    dismiss()
+                }
+            )
+        }
     }
 }
 
 #Preview {
     CourseDetailView(
-        course: Course(id: "0", name: "Demo", time: "Mon 10am", left: 5, users: []),
-        goBack: .constant(false)
+        course: Course(id: "0", name: "Demo", time: "Mon 10am", left: 5, users: [])
     )
 }

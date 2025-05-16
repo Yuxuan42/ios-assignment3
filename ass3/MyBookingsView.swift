@@ -18,18 +18,35 @@ struct MyBookingsView: View {
                     .font(.title).bold()
                     .padding(.top)
 
-                List {
-                    ForEach(vm.courses.filter { vm.has($0, userId: userPhone) }) { c in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(c.name).font(.headline)
-                            Text(c.time).foregroundColor(.gray)
-                            Text("Booked")
-                            Button("Cancel") {
-                                vm.cancel(c, userId: userPhone)
+                if userPhone.isEmpty {
+                    Spacer()
+                    Text("Please log in to view bookings.")
+                        .foregroundColor(.gray)
+                        .padding()
+                    Spacer()
+                } else {
+                    let myCourses = vm.courses.filter { vm.has($0, userId: userPhone) }
+                    if myCourses.isEmpty {
+                        Spacer()
+                        Text("No bookings yet.")
+                            .foregroundColor(.gray)
+                            .padding()
+                        Spacer()
+                    } else {
+                        List {
+                            ForEach(myCourses) { c in
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(c.name).font(.headline)
+                                    Text(c.time).foregroundColor(.gray)
+                                    Text("Booked")
+                                    Button("Cancel") {
+                                        vm.cancel(c, userId: userPhone)
+                                    }
+                                    .foregroundColor(.red)
+                                }
+                                .padding(.vertical, 6)
                             }
-                            .foregroundColor(.red)
                         }
-                        .padding(.vertical, 6)
                     }
                 }
             }

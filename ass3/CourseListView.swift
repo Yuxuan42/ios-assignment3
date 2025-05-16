@@ -5,6 +5,13 @@
 //  Created by user941049 on 5/14/25.
 //
 
+//
+//  CourseListView.swift
+//  ass3
+//
+//  Created by user941049 on 5/14/25.
+//
+
 import SwiftUI
 
 struct CourseListView: View {
@@ -35,7 +42,7 @@ struct CourseListView: View {
             .navigationTitle("Classes")
             .sheet(isPresented: $showDetail) {
                 if let course = selectedCourse {
-                    CourseDetailView(course: course, goBack: $showDetail)
+                    CourseDetailView(course: course)
                 }
             }
         }
