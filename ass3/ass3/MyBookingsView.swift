@@ -9,12 +9,12 @@ import SwiftUI
 
 struct MyBookingsView: View {
     @Binding var logged: Bool
-    @StateObject var vm = CourseVM()  // viewmodel 持久化数据
-    @State var back = false  // 控制返回课程页
+    @StateObject var vm = CourseVM()
+    @State var back = false  // 返回course
 
     var body: some View {
         if back {
-            CourseListView(logged: $logged)  // 返回课程页
+            CourseListView(logged: $logged)  
         } else {
             VStack {
                 Text("My Bookings")
