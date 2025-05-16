@@ -8,9 +8,9 @@ import Foundation
 import FirebaseFirestore
 
 struct Course: Identifiable, Codable {
-    @DocumentID var id: String? // Firestore uses String IDs
+    @DocumentID var id: String?
     var name: String
     var time: String
     var left: Int
-    var users: [String] // Array of user names or user IDs
+    var users: [String]
 }

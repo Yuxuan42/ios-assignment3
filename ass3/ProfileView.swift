@@ -60,7 +60,6 @@ struct ProfileView: View {
         .padding()
     }
 
-    // Simple Firestore login
     func login(phone: String, passcode: String) {
         let db = Firestore.firestore()
         db.collection("members").whereField("phone", isEqualTo: phone)
